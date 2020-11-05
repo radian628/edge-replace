@@ -10,6 +10,7 @@ body {
     opacity: 0.5;
     transition: opacity 0.25s;
     line-height: 1.5;
+    max-width: 25%;
 }
 
 .drag-window:hover {
