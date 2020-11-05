@@ -6,7 +6,7 @@
     <body>
         <canvas width="1024" height="1024" id="canvas"></canvas>
         <div id="drag-parent" class="drag-window" style="top: 0px; left: 0px;">
-            <div id="drag-div" class="drag-window-header">Edge-Replacement Fractal Settings</div>
+            <div id="drag-div" class="drag-window-header">Edge-Replacement Fractal Settings (click + drag here)</div>
             <button id="add-fractal-node-button">Add Fractal Node</button>
             <button id="remove-fractal-node-button">Remove Fractal Node</button>
             <br>
@@ -33,6 +33,8 @@
             <br>
             <label>Small Line Threshold</label>
             <input type="number" id="small-line-threshold" value="2"> 
+            <hr>
+            <p>This fractal generator works by taking several fractal "nodes" and connecting them together into a series of vectors (This series is the "replacer"). A copy of the replacer is made, and each vector in that copy is replaced with the replacer, such that the replacer retains its original direction and magnitude. Each vector in <i>that</i> series of vectors is replaced with the replacer. This process repeats a number of times equal to the iteration count. At least three fractal nodes are required to create a fractal.</p>
         </div>
         <div id="fractal-nodes"></div>
         <script src="main.js" type="module" ></script>
