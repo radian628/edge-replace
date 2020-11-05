@@ -1,268 +1,300 @@
-var mouse = { x: 0, y: 0 };
-document.addEventListener("mousemove", function (e) {
-	mouse.x = e.clientX;
-    mouse.y = e.clientY;
-    if (snapMode.value != "0") {
-        if (snapMode.value == "2") {
-            if (Math.round(mouse.y / 50) % 2) {
-                mouse.x = Math.floor(mouse.x / 50 * Math.sqrt(3) / 2) * 50 / Math.sqrt(3) * 2 + 25 / Math.sqrt(3) * 2;
+import { V2 } from "./vector2.js";
+
+function jsonToHTML(json) {
+    if (json.elem) {
+        return json.elem;
+    } else {
+        let elem = document.createElement(json.tagName);
+        if (json.attributes) {
+            Object.keys(json.attributes).forEach(attribute => {
+                elem[attribute] = json.attributes[attribute];
+            });
+        }
+        if (json.children) {
+            json.children.forEach(child => {
+                elem.appendChild(jsonToHTML(child));
+            });
+        }
+        return elem;
+    }
+}
+
+function squareSnap(x, size) {
+    return Math.floor(x / size) * size;
+}
+
+class ReplaceableEdge {
+    constructor (vector, reverse, reflect) {
+        this.vector = vector;
+        this.reverse = reverse || false;
+        this.reflect = reflect || false;
+    }
+}
+
+function xor(a, b) {
+    return (a || b) && !(a && b)
+}
+
+class Replacer {
+    constructor (vectors) {
+        this.updateVectors(vectors);
+    }
+
+    updateSum() {
+        this.sum = this.vectors.reduce((prev, cur) => prev.add(cur.vector), new V2(0, 0));
+    }
+
+    updateVectors(newVectors) {
+        this.vectors = newVectors;
+        this.vectorsReversed = this.vectors.concat().reverse();
+        this.updateSum();
+    }
+
+    replace (vectors, threshold) {
+        let newVectors = [];
+        
+        vectors.forEach(v => {
+            let vectorSumAngle = this.sum.angle();
+            let deltaAngle = v.vector.angle() - vectorSumAngle;
+            let scaleFactor = v.vector.length() / this.sum.length();
+            if (v.vector.length() > threshold) {
+                if (v.reflect) {
+                    if (v.reverse) {
+                        this.vectorsReversed.forEach(v2 => {
+                            newVectors.push(new ReplaceableEdge(V2.fromPolar(2 * vectorSumAngle - v2.vector.angle() + deltaAngle, v2.vector.length() * scaleFactor), v2.reverse, v2.reflect));
+                        });
+                    } else {
+                        this.vectors.forEach(v2 => {
+                            newVectors.push(new ReplaceableEdge(V2.fromPolar(2 * vectorSumAngle - v2.vector.angle() + deltaAngle, v2.vector.length() * scaleFactor), v2.reverse, v2.reflect));
+                        });
+                    }
+                } else {
+                    if (v.reverse) {
+                        this.vectorsReversed.forEach(v2 => {
+                            newVectors.push(new ReplaceableEdge(V2.fromPolar(v2.vector.angle() + deltaAngle, v2.vector.length() * scaleFactor), v2.reverse, v2.reflect));
+                        });
+                    } else {
+                        this.vectors.forEach(v2 => {
+                            newVectors.push(new ReplaceableEdge(V2.fromPolar(v2.vector.angle() + deltaAngle, v2.vector.length() * scaleFactor), v2.reverse, v2.reflect));
+                        });
+                    }
+                }
             } else {
-                mouse.x = Math.round(mouse.x / 50 * Math.sqrt(3) / 2) * 50 / Math.sqrt(3) * 2;
+                newVectors.push(v);
             }
-        } else {
-            mouse.x = Math.round(mouse.x / 50) * 50;
-        }
-    	mouse.y = Math.round(mouse.y / 50) * 50;
-    }
-});
+        });
 
-window.addEventListener("resize", function (e) {
-	c.width = window.innerWidth;
-    c.height = window.innerHeight;
-})
-
-var draggables = [];
-var draggableElems = document.getElementsByClassName("draggable");
-
-function redefineDraggables() {
-    draggableElems = document.getElementsByClassName("draggable");
-    draggables = [];
-    for (var i = 0; draggableElems.length > i; i++) {
-        var elem = draggableElems[i];
-      elem.draggableIndex = i;
-      elem.onmousedown = function (e) {
-        draggables[e.target.draggableIndex] = true;
-      }
-      elem.onmouseup = function (e) {
-        draggables[e.target.draggableIndex] = false;
-      }
+        return newVectors;
     }
 }
 
-//canvas context
-var c = document.getElementById("canvas");
-var ctx = c.getContext("2d");
-
-c.width = window.innerWidth;
-c.height = window.innerHeight;
-
-//This is just tau (PI * 2) so my life is made easier.
-const TAU = Math.PI * 2;
-
-//Pythagorean distance function. Returns distance from (0, 0) to (a, b).
-function dist(a, b) {
-	return Math.sqrt(a * a + b * b);
-}
-
-//Vector defined by cartesian coordinates, along with two optional paramters for whether to reverse order and reflect when edge-replacing.
-function V(x, y, reverse, reflect) {
-	this.x = x;
-    this.y = y
-    this.m = dist(x, y);
-    this.d = Math.atan2(y, x);
-    this.reverse = reverse;
-    this.reflect = reflect;
-}
-
-//Make vector with polar coords.
-function VPolar(m, d, rev, ref) {
-	return new V(Math.cos(d) * m, Math.sin(d) * m, rev, ref);
-}
-
-//Vector sum. Returns a vector equal to the sum of an array of vectors.
-function resultant(v) {
-	var x = 0;
-    var y = 0;
-    v.forEach(function (e) {
-    	x += e.x
-        y += e.y;
-    });
-    return new V(x, y);
-}
-
-//Finds the negative of a vector
-function negative(v) {
-	return new V(-v.x, -v.y, v.reverse, v.reflect);
-}
-
-//Create a drawn path made of several vectors.
-function polylinePath(v, x, y) {
-	var posx = x;
-    var posy = y;
-    v.forEach(function (e) {
-    	ctx.lineTo(posx, posy);
-        posx += e.x;
-        posy += e.y;
-    });
-    ctx.lineTo(posx, posy);
-}
-
-//Transform a vector's scale and rotation. Returns a new vector.
-function transform(v, s, r) {
-	return new V(s * v.m * Math.cos(v.d + r), s * v.m * Math.sin(v.d + r), v.reverse, v.reflect);
-}
-
-//Reflect a vector across another vector.
-function reflectAcross(v, mirror) {
-	var deltaAngle = (mirror.d - v.d);
-    var v2 = transform(v, 1, deltaAngle * 2);
-    v2.reflect = !v2.reflect;
-    return v2;
-}
-
-//Replace a single vector with multiple vectors, such that the sum of the new vectors is equal to the old vector.
-function singleEdgeReplace(v, rule) {
-    var ruleSum = resultant(rule);
-    var transformScale = v.m / ruleSum.m;
-    var transformRotation = v.d - ruleSum.d;
-    var replaced;
-    if (v.reflect) {
-    	replaced = rule.map(e => reflectAcross(transform(e, transformScale, transformRotation), v));
+function createVectorPath(vecList, ctx, start) {
+    if (!start) { 
+        start = new V2(0, 0);
     } else {
-    	replaced = rule.map(e => transform(e, transformScale, transformRotation));
+        start = new V2(start);
     }
-    if (v.reverse) {
-    	return replaced.reverse();		
-    } else {
-    	return replaced;
-    }
+
+    ctx.moveTo(start.x, start.y);
+    vecList.forEach(v => {
+        start.add(v);
+        ctx.lineTo(start.x, start.y);
+    });
 }
 
-//Perform the "single edge replace" function (above) to multiple vectors, then concatonates the result.
-function edgeReplace(v, rule) {
-	var v2 = [];
-    v.forEach(function (e) {
-        if (!ie["aslr"].checked || e.m > valNum("small-line-threshold")) {
-            v2 = v2.concat(singleEdgeReplace(e, rule));
-        } else {
-            v2.push(e);
-        }
-    })
-    return v2;
+function attachDragHandler(dragElem, parentElem, customCallback) {
+    let dragFunc = event => {
+        if (customCallback) customCallback(event);
+        parentElem.style.top = event.clientY - offset.y + "px";
+        parentElem.style.left = event.clientX - offset.x + "px";
+    };
+
+    let offset = new V2(0, 0);
+    dragElem.addEventListener("mousedown", event => {
+        event.preventDefault();
+        let rect = parentElem.getBoundingClientRect();
+        offset = new V2(event.clientX - rect.left, event.clientY - rect.top);
+        document.addEventListener("mousemove", dragFunc);
+    });
+    dragElem.addEventListener("mouseup", event => {
+        document.removeEventListener("mousemove", dragFunc);
+    });
 }
 
-//Applies the edgeReplace function to its own result a number of times equal to depth.
-function iterativeEdgeReplace(v, rule, depth) {
-	for (var i = 0; depth > i; i++) {
-    	v = edgeReplace(v, rule);
-    }
-    return v;
-}
-
-//Time variable for loops.
-var t = 0;
-/*
-var currentRule = [
-        new VPolar(100, TAU / 6, false, true),
-        new VPolar(100, 0),
-        new VPolar(100, -TAU / 6, false, true)
-    ];
+function addFractalNode() {
+    let fractalNodeID = fractalNodeList.length;
     
-currentRule = [];
+    let fractalNode = jsonToHTML({
+        tagName: "div",
+        attributes: {
+            style: "position: absolute; top: 0px; left: 0px;",
+            className: "drag-window"
+        },
+        children: [
+            {
+                tagName: "div",
+                attributes: {
+                    className: "drag-window-header",
+                    innerText: "Fractal Node"
+                }
+            }, 
+            {
+                tagName: "label",
+                attributes: {
+                    innerText: "Reverse"
+                }
+            }, 
+            {
+                tagName: "input",
+                attributes: {
+                    type: "checkbox", onchange: updateFractal
+                }
+            }, 
+            {
+                tagName: "label",
+                attributes: {
+                    innerText: "Reflect"
+                }
+            }, 
+            {
+                tagName: "input",
+                attributes: {
+                    type: "checkbox", onchange: updateFractal
+                }
+            }
+        ]
+    });
 
-for (var i = 0; 3 > i; i++) {
-	var dir = TAU / 6 * Math.floor(Math.random() * 6);
-    currentRule.push(new VPolar(Math.round(Math.random()) + 1, dir, Math.random() > 0.5, Math.random() > 0.5));
+    attachDragHandler(fractalNode.children[0], fractalNode, event => {
+        updateFractal();
+    });
+
+    fractalNodeContainer.appendChild(fractalNode);
+
+    fractalNodeList.push(fractalNode);
+
+    updateFractal();
 }
 
-for (var i = 0; 10 > i; i++) {
-	ctx.strokeStyle = "hsl(" + (i * 30) + ", 100%, 35%)";
-    ctx.beginPath();
-    polylinePath(iterativeEdgeReplace([new V(150, 150)], currentRule, i), 100, 250 * i + 150);
-    ctx.stroke();
-}
-*/
-
-var modeKey = [
-	"norevref",
-    "rev",
-    "ref",
-    "revref"
-];
-
-//stands for "draggable element coordinates"
-function dec(index) {
-	if (index == "len") {
-  	index = draggableElems.length - 1;
-  }
-	return {
-  	x: Number(draggableElems[index].style.left.slice(0, -2)),
-    y: Number(draggableElems[index].style.top.slice(0, -2)),
-    rev: draggableElems[index].className == "draggable rev" || draggableElems[index].className == "draggable revref",
-    ref: draggableElems[index].className == "draggable ref" || draggableElems[index].className == "draggable revref"
-  };
+function removeFractalNode() {
+    let lastFractalNode = fractalNodeList.pop();
+    fractalNodeContainer.removeChild(lastFractalNode);
+    updateFractal();
 }
 
-function val(input) {
-    return ie[input].value;
-}
+attachDragHandler(document.getElementById("drag-div"), document.getElementById("drag-parent"));
 
-function valNum(input) {
-    return Number(ie[input].value);
-}
-
-var inputs = [
-    "itr-count",
-    "auto-iterate",
-    "aslr",
-    "small-line-threshold"
-];
-
-var ie = {};
-inputs.forEach(function (e) {
-    ie[e] = document.getElementById(e);
+document.getElementById("add-fractal-node-button").addEventListener("click", event => {
+    addFractalNode();
+});
+document.getElementById("remove-fractal-node-button").addEventListener("click", event => {
+    removeFractalNode();
 });
 
-var snapMode = document.getElementById("snap");
+let fractalNodeContainer = document.getElementById("fractal-nodes");
+let fractalNodeList = [];
+let canvas = document.getElementById("canvas");
+let context = canvas.getContext("2d");
 
-function loop() {
-	var canDragElem = true;
-    var currentRule = [];
-	for (var i = 0; draggableElems.length > i; i++) {
-    var elem = draggableElems[i];
-    if (draggables[draggableElems[i].draggableIndex] && canDragElem) {
-    //window.alert(e.target.style.top);
-      elem.style.top = (mouse.y - 5) + "px";
-      elem.style.left = (mouse.x - 5) + "px";
-      if (mouse.x < 40 && mouse.y < 160) {
-      	var mode = Math.floor(mouse.y / 40);
-        elem.className = "draggable " + modeKey[mode];
-      }
-      canDragElem = false;
+let resizeCanvas = event => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    updateFractal();
+}
+
+window.addEventListener("resize", resizeCanvas);
+
+let fractalSettings = {};
+Array.from(document.getElementById("drag-parent").children).forEach(child => {
+    console.log(child.tagName);
+    if (child.tagName == "INPUT" || child.tagName == "SELECT") {
+        fractalSettings[child.id] = child;
+        child.onchange = updateFractal;
     }
-    if (i != 0) {
-    	var xpos = dec(i).x - dec(i - 1).x;
-        var ypos = dec(i).y - dec(i - 1).y;
-        /*if (snapMode.value == "1") {
-        	xpos = Math.floor(xpos / 50) * 50;
-        	ypos = Math.floor(ypos / 50) * 50;
-        }*/
-      currentRule.push(new V(xpos, ypos, dec(i).rev, dec(i).ref));
+});
+
+function updateFractal() {
+
+    let iterationCount = Number(fractalSettings["iteration-count"].value);
+
+    let displayAllIterations = fractalSettings["display-all-iterations"].checked;
+
+    let dontSubdivideSmallLines = fractalSettings["dont-subdivide-small-lines"].checked;
+
+    let snapType = fractalSettings["snap-type"].value;
+    
+    let snapSize = Number(fractalSettings["snap-size"].value);
+
+    let smallLineThreshold = Number(fractalSettings["small-line-threshold"].value);
+
+    if (fractalNodeList.length >= 2) {
+
+        let startVector;
+        let endVector;
+        let startRect = fractalNodeList[0].getBoundingClientRect();
+        let endRect = fractalNodeList[fractalNodeList.length - 1].getBoundingClientRect();
+        if (snapType == "none") {
+            startVector = new V2(startRect.left, startRect.top);
+            endVector = new V2(endRect.left, endRect.top);
+        } else if (snapType == "square") {
+            startVector = new V2(squareSnap(startRect.left, snapSize), squareSnap(startRect.top, snapSize));
+            endVector = new V2(squareSnap(endRect.left, snapSize), squareSnap(endRect.top, snapSize));
+        } else if (snapType == "triangular") {
+            startVector = new V2(squareSnap(startRect.left, snapSize) + (Math.floor(startRect.top / snapSize * 2 / Math.sqrt(3)) % 2) * snapSize / 2, squareSnap(startRect.top, snapSize * Math.sqrt(3) / 2));
+            endVector = new V2(squareSnap(endRect.left, snapSize) + (Math.floor(endRect.top / snapSize * 2 / Math.sqrt(3)) % 2) * snapSize / 2, squareSnap(endRect.top, snapSize * Math.sqrt(3) / 2));
+        }
+
+        let replacementEdges = [];
+        let vList = [new ReplaceableEdge(new V2(endVector).sub(startVector))];
+        let previousPosition;
+        fractalNodeList.forEach((fNode, i) => {
+            let currentPosition;
+            let rect = fNode.getBoundingClientRect();
+            if (snapType == "none") {
+                currentPosition = new V2(rect.left, rect.top);
+            } else if (snapType == "square") {
+                currentPosition = new V2(squareSnap(rect.left, snapSize), squareSnap(rect.top, snapSize));
+            } else if (snapType = "triangular") {
+                currentPosition = new V2(squareSnap(rect.left, snapSize) + (Math.floor(rect.top / snapSize * 2 / Math.sqrt(3)) % 2) * snapSize / 2, squareSnap(rect.top, snapSize * Math.sqrt(3) / 2));
+            }
+            if (i > 0) {
+                replacementEdges.push(new ReplaceableEdge(new V2(currentPosition).sub(previousPosition), fNode.children[2].checked, fNode.children[4].checked, ));
+            }
+            previousPosition = new V2(currentPosition);
+        });
+
+        let replacer = new Replacer(replacementEdges);
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; iterationCount > i; i++) {
+            if (displayAllIterations) {
+                context.beginPath();
+                createVectorPath(vList.map(v => v.vector), context, new V2(startVector));
+                context.stroke();
+            }
+
+            vList = replacer.replace(vList, dontSubdivideSmallLines ? smallLineThreshold : 0);
+        }
+        console.log(vList);
+
+        let startVec = new V2(startVector);
+        context.beginPath();
+        context.fillStyle = "red";
+        context.arc(startVec.x, startVec.y, 4, 0, Math.PI * 2);
+        context.fill();
+        replacer.vectors.forEach(v => {
+            startVec.add(v.vector);
+            context.beginPath();
+            context.fillStyle = "red";
+            context.arc(startVec.x, startVec.y, 4, 0, Math.PI * 2);
+            context.fill();
+        });
+
+        context.beginPath();
+        createVectorPath(vList.map(v => v.vector), context, new V2(startVector));
+        context.stroke();
     }
-  }
-  
-  
-  	ctx.clearRect(0, 0, c.width,c.height)
-    ctx.beginPath();
-    polylinePath(singleEdgeReplace(new V(dec("len").x - dec(0).x, dec("len").y - dec(0).y), iterativeEdgeReplace([new V(dec("len").x - dec(0).x, dec("len").y - dec(0).y)], currentRule, ie["auto-iterate"].checked ? Math.floor(Math.log(10000) / Math.log(draggableElems.length)) : valNum("itr-count"))), dec(0).x, dec(0).y);
-    ctx.stroke();
-	requestAnimationFrame(loop);
 }
 
-var draggableContainer = document.getElementById("controller-container");
-
-function addDraggable() {
-	draggableContainer.innerHTML += '<div class="draggable norevref" width="50px" height="50px" style="top: 400px; left: 500px;"></div>';
-    redefineDraggables();
-}
-document.getElementById("addnode").onclick = addDraggable;
-
-function removeDraggable() {
-	draggableContainer.removeChild(draggableContainer.lastElementChild)
-	redefineDraggables();
-}
-document.getElementById("removenode").onclick = removeDraggable;
-
-redefineDraggables();
-
-loop();
+resizeCanvas();

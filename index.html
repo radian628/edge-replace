@@ -1,47 +1,40 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Page Title</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+        <link rel="stylesheet" type="text/css" href="style.css">
     </head>
     <body>
-        <canvas width="512" height="512" id="canvas"></canvas>
-        <div id="icon-container">
-            <div class="norevref" id="norevref"></div>
-            <div class="rev" id="rev"></div>
-            <div class="ref" id="ref"></div>
-            <div class="revref" id="revref"></div>
-            <button id="addnode">Add Node</button>
+        <canvas width="1024" height="1024" id="canvas"></canvas>
+        <div id="drag-parent" class="drag-window" style="top: 0px; left: 0px;">
+            <div id="drag-div" class="drag-window-header">Edge-Replacement Fractal Settings</div>
+            <button id="add-fractal-node-button">Add Fractal Node</button>
+            <button id="remove-fractal-node-button">Remove Fractal Node</button>
             <br>
-            <button id="removenode">Remove Node</button>
+            <label>Iteration Count</label>
+            <input type="number" step="1" id="iteration-count" value="8" min="0" max="32">
             <br>
-            <select id="snap">
-                <option value="0">No Snap</option>
-                <option value="1">Square Snap</option>
-                <option value="2">Triangular Snap</option>
+            <label>Display All Iterations</label>
+            <input type="checkbox" checked="false" id="display-all-iterations">
+            <br>
+            <hr>
+            <label>Snap Type</label>
+            <select id="snap-type">
+                <option value="none">No Snap</option>
+                <option value="square">Square Snap</option>
+                <option value="triangular">Triangular Snap</option>
             </select>
             <br>
-            Auto-iterations:
-            <input type="checkbox" id="auto-iterate">
+            <label>Snap Size</label>
+            <input type="number" value="64" min="1" id="snap-size">
             <br>
-            Iteration Count:
-            <input type="number" class="num-input" id="itr-count" value="6">
+            <hr>
+            <label>Don't Subdivide Small Lines</label>
+            <input type="checkbox" checked="false" id="dont-subdivide-small-lines">
             <br>
-            Anti-small Line Replacement:
-            <input type="checkbox" id="aslr">
-            <br>
-            Small Line Threshold:
-            <input type="number" class="num-input" id="small-line-threshold" value="1">
+            <label>Small Line Threshold</label>
+            <input type="number" id="small-line-threshold" value="2"> 
         </div>
-        <div id="controller-container">
-            <div class="draggable norevref" width="50px" height="50px" style="top: 400px; left: 200px;"></div>
-            <div class="draggable norevref" width="50px" height="50px" style="top: 300px; left: 300px;"></div>
-            <div class="draggable norevref" width="50px" height="50px" style="top: 300px; left: 400px;"></div>
-            <div class="draggable norevref" width="50px" height="50px" style="top: 400px; left: 500px;"></div>
-        </div>
-        <script src="main.js"></script>
+        <div id="fractal-nodes"></div>
+        <script src="main.js" type="module" ></script>
     </body>
 </html>

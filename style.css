@@ -1,0 +1,72 @@
+body {
+    font-family: Arial;
+}
+
+.drag-window {
+    border-radius: 10px;
+    padding: 5px;
+    position: absolute;
+    background: #c7ddde;
+    opacity: 0.5;
+    transition: opacity 0.25s;
+    line-height: 1.5;
+}
+
+.drag-window:hover {
+    opacity: 1.0;
+}
+
+.drag-window-header {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    margin: -6px;
+    margin-bottom: 5px;
+    padding: 5px;
+    font-weight: bold;
+    background-color: #7ed5e4;
+    cursor: grab;
+}
+
+.drag-window-header:active {
+    cursor: grabbing;
+}
+
+button {
+    background: #006a6f;
+    color: White;
+    border-color: #00000000;
+    border-radius: 10px;
+}
+
+input {
+    border-radius: 10px;
+    border-color: #00000000;
+    background: rgb(226, 246, 250);
+}
+
+hr {
+    background-color: #00a2ab;
+    height: 3px;
+    border-width: 0;
+    border-radius: 1.5px;
+}
+
+select, option {
+    border-radius: 10px;
+    border-color: #00000000;
+    background: rgb(226, 246, 250);
+}
+
+#fractal-nodes {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+#canvas {
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    position: absolute;
+}
