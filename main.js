@@ -141,7 +141,8 @@ function addFractalNode() {
             {
                 tagName: "label",
                 attributes: {
-                    innerText: "Reverse"
+                    innerText: "Reverse",
+                    title: "Reverse the order of the vectors when this one is replaced."
                 }
             }, 
             {
@@ -156,7 +157,8 @@ function addFractalNode() {
             {
                 tagName: "label",
                 attributes: {
-                    innerText: "Reflect"
+                    innerText: "Reflect",
+                    title: "Reflect the replacement vectors about the axis of this one."
                 }
             }, 
             {

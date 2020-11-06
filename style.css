@@ -65,3 +65,14 @@ select, option {
     left: 0px;
     position: absolute;
 }
+
+label {
+    background-color: #FFFFFF00;
+    border-radius: 10px;
+    padding: 2px;
+    transition: background-color 2s;
+}
+
+label:hover {
+    background-color: #FFFFFF88;
+}

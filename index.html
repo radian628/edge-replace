@@ -10,31 +10,31 @@
             <button id="add-fractal-node-button">Add Fractal Node</button>
             <button id="remove-fractal-node-button">Remove Fractal Node</button>
             <br>
-            <label>Iteration Count</label>
+            <label title="The number of times to replace each line with the lines defined by the fractal nodes.">Iteration Count</label>
             <input type="number" step="1" id="iteration-count" value="8" min="0" max="32">
             <br>
-            <label>Display All Iterations</label>
+            <label title="Display the lines for every iteration.">Display All Iterations</label>
             <input type="checkbox" checked="false" id="display-all-iterations">
             <br>
             <hr>
-            <label>Snap Type</label>
+            <label title="Whether fractal nodes should snap to a grid. Good for creating fractals that rely on square and triangular patterns.">Snap Type</label>
             <select id="snap-type">
                 <option value="none">No Snap</option>
                 <option value="square">Square Snap</option>
                 <option value="triangular">Triangular Snap</option>
             </select>
             <br>
-            <label>Snap Size</label>
+            <label title="Snap grid size.">Snap Size</label>
             <input type="number" value="64" min="1" id="snap-size">
             <br>
             <hr>
-            <label>Don't Subdivide Small Lines</label>
+            <label title="If enabled, very small lines will not be subdivided. This helps with performance, but is slightly less accurate.">Don't Subdivide Small Lines</label>
             <input type="checkbox" checked="false" id="dont-subdivide-small-lines">
             <br>
-            <label>Small Line Threshold</label>
+            <label title="If the above setting is enabled, lines less than the length (in pixels) specified here will not be subdivided.">Small Line Threshold</label>
             <input type="number" id="small-line-threshold" value="2"> 
             <hr>
-            <p>This fractal generator works by taking several fractal "nodes" and connecting them together into a series of vectors (This series is the "replacer"). A copy of the replacer is made, and each vector in that copy is replaced with the replacer, such that the replacer retains its original direction and magnitude. Each vector in <i>that</i> series of vectors is replaced with the replacer. This process repeats a number of times equal to the iteration count. At least three fractal nodes are required to create a fractal.</p>
+            <p>This fractal generator works by taking several fractal "nodes" and connecting them together into a series of vectors (This series is the "replacer"). Next, a vector is drawn from the first node to the last. This series of vectors (currently just one vector) is the "fractal". Every vector in the fractal is then replaced with the replacer, the only difference being that the replacer is scaled and oriented to have a vector sum equal to that of the original vector. Repeat this process several times, and an actual fractal will form. At least three fractal nodes are required to create a fractal. <strong>Put your mouse over the label for each setting for additional information on what it does.</strong></p>
         </div>
         <div id="fractal-nodes"></div>
         <script src="main.js" type="module" ></script>
