@@ -303,3 +303,14 @@ function updateFractal() {
 }
 
 resizeCanvas();
+
+addFractalNode();
+fractalNodeContainer.lastChild.style.left = "600px";
+fractalNodeContainer.lastChild.style.top = "400px";
+addFractalNode();
+fractalNodeContainer.lastChild.style.left = "700px";
+fractalNodeContainer.lastChild.style.top = "500px";
+addFractalNode();
+fractalNodeContainer.lastChild.style.left = "800px";
+fractalNodeContainer.lastChild.style.top = "400px";
+updateFractal();
