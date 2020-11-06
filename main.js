@@ -149,7 +149,10 @@ function addFractalNode() {
                 attributes: {
                     type: "checkbox", onchange: updateFractal
                 }
-            }, 
+            },
+            {
+                tagName: "br"
+            },
             {
                 tagName: "label",
                 attributes: {
@@ -258,7 +261,7 @@ function updateFractal() {
                 currentPosition = new V2(squareSnap(rect.left, snapSize) + (Math.floor(rect.top / snapSize * 2 / Math.sqrt(3)) % 2) * snapSize / 2, squareSnap(rect.top, snapSize * Math.sqrt(3) / 2));
             }
             if (i > 0) {
-                replacementEdges.push(new ReplaceableEdge(new V2(currentPosition).sub(previousPosition), fNode.children[2].checked, fNode.children[4].checked, ));
+                replacementEdges.push(new ReplaceableEdge(new V2(currentPosition).sub(previousPosition), fNode.children[2].checked, fNode.children[5].checked, ));
             }
             previousPosition = new V2(currentPosition);
         });
